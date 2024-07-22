@@ -38,14 +38,33 @@ class FieldCodec<T> {
 
     final params = group.substring(1, group.length - 1).split(',');
 
+    /// Exception handling for cases where the split character ',' is included in the QueryParams string,
+    /// resulting in key-value pairs not being paired correctly.
+    /// Example Case:
+    ///
+    /// ```
+    /// final queryGroup = {
+    ///   'foo': 'bar',
+    ///   'amount': '500,000',
+    /// };
+    /// ```
     return Map<String, String>.fromEntries(
       params.map(
         (param) {
-          final parts = param.split(':');
-          final String decodedKey = Uri.decodeComponent(parts[0]);
-          return MapEntry(decodedKey, parts[1]);
-        },
-      ),
+          try {
+            final parts = param.split(':');
+            final String decodedKey = Uri.decodeComponent(parts[0]);
+            final String value = parts[1];
+            if (value.isNotEmpty) {
+              return MapEntry(decodedKey, value);
+            } else {
+              return null;
+            }
+          } catch (e) {
+            return null;
+          }
+        }
+      ).whereType<MapEntry<String, String>>(),
     );
   }
 }
