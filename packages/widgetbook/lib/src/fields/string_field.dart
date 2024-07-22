@@ -15,9 +15,19 @@ class StringField extends Field<String> {
           type: FieldType.string,
           codec: FieldCodec(
             toParam: (value) => Uri.encodeComponent(value),
-            toValue: (param) => param != null
-                ? Uri.decodeComponent(param) //
-                : null,
+            toValue: (param) {
+              if (param == null) return null;
+
+              /// When using Uri.decodeComponent, non-alphanumeric characters can cause errors.
+              /// This prevents "Invalid argument(s): Illegal percent encoding in URI" errors.
+              /// If decoding fails, the string is decoded after the encoding attempt.
+              try {
+                return Uri.decodeComponent(param);
+              } catch (e) {
+                String encodedParam = Uri.encodeComponent(param);
+                return Uri.decodeComponent(encodedParam);
+              }
+            },
           ),
         );
 
